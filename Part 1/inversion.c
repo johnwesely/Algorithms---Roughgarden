@@ -2,6 +2,7 @@
 #include <stdlib.h> 
 
 int count_inversions(int* arr, size_t len);
+int count_inversions_wrapper(int* arr, size_t len);
 int merge_count(int* arr1, size_t len1, int* arr2, size_t len2);
 
 int main(int argc, char* arg_v[]) {
@@ -12,13 +13,25 @@ int main(int argc, char* arg_v[]) {
     return EXIT_SUCCESS;
 }
 
-int count_inversions(int* arr, size_t len) {
+// copy arr and call count_inversions wrapper with copy to preserve original array
+int count_inverions_wrapper(int* arr, sizz_t len) {
+    int* arrcpy[len];
+
+    for (size_t i = 0; i < len; ++i) {
+        arrcpy[i] = arr[i];
+    }
+
+    return count_inversions_wrapper(arrcpy, len);
+}
+
+// standard merge sort with addition of ret variable tracking split inversions
+int count_inversions_wrapper(int* arr, size_t len) {
     if (len < 2) return 0;
     size_t ret = 0;
     size_t m = len / 2;
 
-    ret += count_inversions(arr, m);
-    ret += count_inversions(arr + m, len - m);
+    ret += count_inversions_wrapper(arr, m);
+    ret += count_inversions_wrapper(arr + m, len - m);
 
     ret += merge_count(arr, m, arr + m, len - m);
 
@@ -66,3 +79,5 @@ int merge_count(int* arr1, size_t len1, int* arr2, size_t len2) {
 int f_to_int_arr(FILE* f, int* arr) {
     return 1;
 }
+
+
