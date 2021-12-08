@@ -1,21 +1,42 @@
+/* counts number over inversions in a file containing integers seperated by '/n'
+** takes one command line argument a file containing the list of numbers */
 #include <stdio.h>
 #include <stdlib.h> 
+#include <fcntl.h>
 
-int count_inversions(int* arr, size_t len);
-int count_inversions_wrapper(int* arr, size_t len);
-int merge_count(int* arr1, size_t len1, int* arr2, size_t len2);
+unsigned long long count_inversions(int* arr, size_t len);
+unsigned long long count_inversions_wrapper(int* arr, size_t len);
+unsigned long long merge_count(int* arr1, size_t len1, int* arr2, size_t len2);
+size_t line_count(FILE* f); 
+int* f_to_int_arr(FILE* f, size_t len);
 
-int main(int argc, char* arg_v[]) {
-    int test[] = { 1, 5, 4, 3, 2, 1 };
+int main(int argc, char* argv[]) {
+    if (argc != 2) {
+        printf("inversion takes one command line argument:\n a file containing a list of numbers seperated by '\\n'\n");
+        return EXIT_FAILURE;
+    }
 
-    printf("number of inversions = %d\n", count_inversions(test, 6));
+    FILE* f = fopen(argv[1], "r");
+    if (!f) {
+        perror("unable to open file: ");
+        return EXIT_FAILURE;
+    }
+
+    size_t len = line_count(f);
+    if (len == -1) {
+        printf("reading file to array failed");
+    }
+
+    int* arr = f_to_int_arr(f, len);
+
+    printf("number of inversions = %lld\n", count_inversions(arr, len));
 
     return EXIT_SUCCESS;
 }
 
 // copy arr and call count_inversions wrapper with copy to preserve original array
-int count_inverions_wrapper(int* arr, sizz_t len) {
-    int* arrcpy[len];
+unsigned long long count_inversions(int* arr, size_t len) {
+    int arrcpy[len];
 
     for (size_t i = 0; i < len; ++i) {
         arrcpy[i] = arr[i];
@@ -25,9 +46,9 @@ int count_inverions_wrapper(int* arr, sizz_t len) {
 }
 
 // standard merge sort with addition of ret variable tracking split inversions
-int count_inversions_wrapper(int* arr, size_t len) {
+unsigned long long count_inversions_wrapper(int* arr, size_t len) {
     if (len < 2) return 0;
-    size_t ret = 0;
+    unsigned long long ret = 0;
     size_t m = len / 2;
 
     ret += count_inversions_wrapper(arr, m);
@@ -38,8 +59,8 @@ int count_inversions_wrapper(int* arr, size_t len) {
     return ret;
 }
 
-int merge_count(int* arr1, size_t len1, int* arr2, size_t len2) {
-    int ret = 0;
+unsigned long long merge_count(int* arr1, size_t len1, int* arr2, size_t len2) {
+    unsigned long long ret = 0;
     int tmp[len1+len2];
     size_t i = 0;
     size_t j = 0;
@@ -76,8 +97,42 @@ int merge_count(int* arr1, size_t len1, int* arr2, size_t len2) {
     return ret;
 }
 
-int f_to_int_arr(FILE* f, int* arr) {
-    return 1;
+size_t line_count(FILE* f) {
+    fseek(f, 0, SEEK_SET);
+    size_t buff_size = 256;
+    char* buff = malloc(buff_size);
+    if (!buff) {
+        perror("allocation failed: ");
+        return -1;
+    }
+
+    size_t line_count = 0;
+
+    while (getline(&buff, &buff_size, f) > 0) {
+        ++line_count;
+    }
+
+    free(buff);
+
+    return line_count;
+}
+
+int* f_to_int_arr(FILE* f, size_t len) {
+    fseek(f, 0, SEEK_SET);
+    size_t buff_size = 256;
+    int* ret = malloc(sizeof(int) * len);
+    char* buff = malloc(buff_size);
+    if (!buff || !ret) {
+        perror("allocation failed: ");
+    }
+
+    size_t i = 0;
+    while (getline(&buff, &buff_size, f) > 0) {
+        ret[i++] = atoi(buff);
+    }
+
+    free(buff);
+    return ret;
 }
 
 
