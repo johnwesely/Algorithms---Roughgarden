@@ -83,8 +83,10 @@ void destroy_graph(graph_t* g) {
 }
 
 void destroy_edge_list(edge_t* e) {
-    if (e->next) destroy_edge_list(e->next);
-    free(e);
+    if (e) {
+        if (e->next) destroy_edge_list(e->next);
+        free(e);
+    } 
 }
 
 graph_t* read_graph(FILE* f) {
