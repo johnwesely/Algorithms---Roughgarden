@@ -30,6 +30,9 @@ graph_t* read_graph(FILE* f);
 size_t count_vertices(FILE* f);
 size_t getline(char **restrict lineptr, size_t *restrict n, FILE *restrict stream);
 void print_graph(graph_t* g);
+size_t* depth_first_search(graph_t* g);
+void dfs(vertice_t v, size_t* discovery_map, size_t* order);
+void print_discovery_map(size_t* dm, size_t len);
 
 int main(int argc, char* argv[]) {
     if (argc != 2) {
@@ -48,9 +51,45 @@ int main(int argc, char* argv[]) {
     fclose(f);
     
     print_graph(g);
+    size_t* discovery_map = depth_first_search(g);
+    printf("number of vertices in g = %zu\n", g->v_count);
+    print_discovery_map(discovery_map, g->v_count);
     destroy_graph(g);
 
     return EXIT_SUCCESS;
+}
+
+size_t* depth_first_search(graph_t* g) {
+    size_t* discovery_map = calloc(g->v_count, sizeof(size_t));
+    size_t order = 1;
+
+    for(size_t i = 0; i < g->v_count; ++i) {
+        if (discovery_map[i]) {
+            continue;
+        } 
+
+        discovery_map[i] = order++;
+        dfs(g->vert_arr[i], discovery_map, &order);
+    }
+
+    return discovery_map;
+}
+
+// while nodes are left in vertice, see if node is discovered, if not,
+// order node and call call dfs
+void dfs(vertice_t v, size_t* discovery_map, size_t* order) {
+    edge_t* current = v.head;
+
+    while (current) {
+        if (discovery_map[current->edge->id]) {
+            current = current->next;
+            continue;
+        }
+        discovery_map[current->edge->id] = *order;
+        *order += 1;
+        dfs(*current->edge, discovery_map, order);
+        current = current->next;
+    }
 }
 
 graph_t* create_graph(size_t v_count) {
@@ -110,7 +149,8 @@ graph_t* read_graph(FILE* f) {
 size_t count_vertices(FILE* f) {
     size_t buff_size = 256;
     char* buff = calloc(buff_size, 1);
-    char* vert;
+    char* vert_i;
+    char* vert_j;
 
     if (!buff) {
         perror("allocation for count vertices buffer failed ");
@@ -120,8 +160,10 @@ size_t count_vertices(FILE* f) {
     size_t v_count = 0;
 
     while (getline(&buff, &buff_size, f) != -1) {
-        vert = strtok(buff, " ");
-        if (atoi(vert) > v_count) ++v_count;
+        vert_i = strtok(buff, " ");
+        vert_j = strtok(0, " ");
+        if (atoi(vert_i) > v_count) v_count = atoi(vert_i);
+        if (atoi(vert_j) > v_count) v_count = atoi(vert_j);
     }
 
     free(buff);
@@ -141,5 +183,12 @@ void print_graph(graph_t* g) {
         }
 
         printf("NULL\n");
+    }
+}
+
+void print_discovery_map(size_t* dm, size_t len) {
+    printf("order of discovery with depth first search\n");
+    for (size_t i = 0; i < len; ++i) {
+        printf("vertice %zu = %zu\n", i + 1, dm[i]);
     }
 }
