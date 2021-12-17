@@ -51,10 +51,14 @@ int main(int argc, char* argv[]) {
     fclose(f);
     
     print_graph(g);
-    size_t* discovery_map = depth_first_search(g);
+    //size_t* discovery_map = depth_first_search(g);
+    size_t* discovery_map = calloc(11, sizeof(size_t));
+    size_t count = 1;
+    dfs(g->vert_arr[5], discovery_map, &count);
     printf("number of vertices in g = %zu\n", g->v_count);
     print_discovery_map(discovery_map, g->v_count);
     destroy_graph(g);
+    free(discovery_map);
 
     return EXIT_SUCCESS;
 }
