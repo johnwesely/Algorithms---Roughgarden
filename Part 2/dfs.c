@@ -2,6 +2,9 @@
 #include <stdio.h>
 #include <string.h>
 
+#define F 1
+#define R 0
+
 typedef struct __edge edge_t;
 typedef struct __vertice vertice_t;
 typedef struct __graph graph_t;
@@ -26,13 +29,13 @@ graph_t* create_graph(size_t v_count);
 void append_edge(graph_t* g, size_t i, size_t j);
 void destroy_graph(graph_t* g);
 void destroy_edge_list(edge_t* e);
-graph_t* read_graph(FILE* f);
+graph_t* read_graph(FILE* f, size_t direction);
 size_t count_vertices(FILE* f);
 size_t getline(char **restrict lineptr, size_t *restrict n, FILE *restrict stream);
 void print_graph(graph_t* g);
 size_t* depth_first_search(graph_t* g);
-void dfs(vertice_t v, size_t* discovery_map, size_t* order);
-void print_discovery_map(size_t* dm, size_t len);
+size_t dfs(vertice_t v, size_t* discovery_map, size_t* finish_time_map, size_t* finish_time, size_t* count);
+void print_finish_times(size_t* dm, size_t len);
 
 int main(int argc, char* argv[]) {
     if (argc != 2) {
@@ -46,54 +49,58 @@ int main(int argc, char* argv[]) {
         return EXIT_FAILURE;
     }
 
-    graph_t* g = read_graph(f);
+    graph_t* g = read_graph(f, R);
 
     fclose(f);
     
     print_graph(g);
-    //size_t* discovery_map = depth_first_search(g);
-    size_t* discovery_map = calloc(11, sizeof(size_t));
-    size_t count = 1;
-    dfs(g->vert_arr[5], discovery_map, &count);
+    size_t* finish_time_map = depth_first_search(g);
     printf("number of vertices in g = %zu\n", g->v_count);
-    print_discovery_map(discovery_map, g->v_count);
+    print_finish_times(finish_time_map, g->v_count);
     destroy_graph(g);
-    free(discovery_map);
+    free(finish_time_map);
 
     return EXIT_SUCCESS;
 }
 
 size_t* depth_first_search(graph_t* g) {
-    size_t* discovery_map = calloc(g->v_count, sizeof(size_t));
-    size_t order = 1;
+    size_t* discovery = calloc(g->v_count, sizeof(size_t));
+    size_t* finish_times = calloc(g->v_count, sizeof(size_t));
+    size_t finish_time = 1;
+    size_t count = 1;
 
     for(size_t i = 0; i < g->v_count; ++i) {
-        if (discovery_map[i]) {
+        if (discovery[i]) {
             continue;
         } 
-
-        discovery_map[i] = order++;
-        dfs(g->vert_arr[i], discovery_map, &order);
+        count = 1;
+        ++discovery[i];
+        dfs(g->vert_arr[i], discovery, finish_times, &finish_time, &count);
     }
 
-    return discovery_map;
+    free(discovery);
+    return finish_times;
 }
 
 // while nodes are left in vertice, see if node is discovered, if not,
 // order node and call call dfs
-void dfs(vertice_t v, size_t* discovery_map, size_t* order) {
+size_t dfs(vertice_t v, size_t* discovery, size_t* finish_times, size_t* finish_time, size_t* count) {
     edge_t* current = v.head;
 
     while (current) {
-        if (discovery_map[current->edge->id]) {
+        if (discovery[current->edge->id]) {
             current = current->next;
             continue;
         }
-        discovery_map[current->edge->id] = *order;
-        *order += 1;
-        dfs(*current->edge, discovery_map, order);
+
+        ++discovery[current->edge->id];
+        *count += 1;
+        *count += dfs(*current->edge, discovery, finish_times, finish_time, count);
         current = current->next;
     }
+    finish_times[v.id] = *finish_time;
+    *finish_time += 1;
+    return *count;
 }
 
 graph_t* create_graph(size_t v_count) {
@@ -132,7 +139,7 @@ void destroy_edge_list(edge_t* e) {
     } 
 }
 
-graph_t* read_graph(FILE* f) {
+graph_t* read_graph(FILE* f, size_t direction) {
     size_t vertice_c = count_vertices(f);
     graph_t* g = create_graph(vertice_c);
 
@@ -143,7 +150,7 @@ graph_t* read_graph(FILE* f) {
     while (getline(&buff, &buff_size, f) != -1) {
         i = atoi(strtok(buff, " ")) - 1;
         j = atoi(strtok(0, " ")) - 1;
-        append_edge(g, i, j);
+        (direction) ? append_edge(g, i, j) : append_edge(g, j, i);
     }
 
     free(buff);
@@ -190,8 +197,8 @@ void print_graph(graph_t* g) {
     }
 }
 
-void print_discovery_map(size_t* dm, size_t len) {
-    printf("order of discovery with depth first search\n");
+void print_finish_times(size_t* dm, size_t len) {
+    printf("finish times with depth first search\n");
     for (size_t i = 0; i < len; ++i) {
         printf("vertice %zu = %zu\n", i + 1, dm[i]);
     }
