@@ -25,6 +25,11 @@ struct __graph {
     vertice_t*  vert_arr;
 };
 
+typedef struct __finish_map {
+    size_t      v_id;
+    size_t      finish_time;
+} finish_map_t;
+
 graph_t* create_graph(size_t v_count);
 void append_edge(graph_t* g, size_t i, size_t j);
 void destroy_graph(graph_t* g);
@@ -36,6 +41,9 @@ void print_graph(graph_t* g);
 size_t* depth_first_search(graph_t* g);
 size_t dfs(vertice_t v, size_t* discovery_map, size_t* finish_time_map, size_t* finish_time, size_t* count);
 void print_finish_times(size_t* dm, size_t len);
+int compare_finish_times(const void* a, const void* b);
+size_t* find_strongly_connected_components(FILE* f);
+size_t* find_scc(FILE* f, finish_map_t* finish_map);
 
 int main(int argc, char* argv[]) {
     if (argc != 2) {
@@ -49,18 +57,63 @@ int main(int argc, char* argv[]) {
         return EXIT_FAILURE;
     }
 
-    graph_t* g = read_graph(f, R);
+    size_t* scc = find_strongly_connected_components(f);
 
+    size_t i = 0;
+    printf("the size of the strongly connected components\n");
+    while (scc[i]) {
+        printf("%zu\n", scc[i++]);
+    }
+
+    free(scc);
     fclose(f);
-    
-    print_graph(g);
-    size_t* finish_time_map = depth_first_search(g);
-    printf("number of vertices in g = %zu\n", g->v_count);
-    print_finish_times(finish_time_map, g->v_count);
-    destroy_graph(g);
-    free(finish_time_map);
 
     return EXIT_SUCCESS;
+}
+size_t* find_strongly_connected_components(FILE* f) {
+    graph_t* g_rev = read_graph(f, R);
+    size_t* finish_times = depth_first_search(g_rev);
+
+    finish_map_t* finish_map = malloc(sizeof(finish_map_t) * g_rev->v_count);
+    for (size_t i = 0; i < g_rev->v_count; ++i) {
+        finish_map[i].v_id = i;
+        finish_map[i].finish_time = finish_times[i];
+    }
+    qsort(finish_map, g_rev->v_count, sizeof(finish_map_t), compare_finish_times);
+
+    for(size_t i = 0; i < g_rev->v_count; ++i) {
+        printf("vertex %zu = finish time %zu\n", finish_map[i].v_id + 1, finish_map[i].finish_time);
+    }
+
+    destroy_graph(g_rev);
+    free(finish_times);
+
+    size_t* scc = find_scc(f, finish_map);
+    free(finish_map);
+    return scc;
+}
+
+size_t* find_scc(FILE* f, finish_map_t* finish_map) {
+    graph_t* g = read_graph(f, F);
+    size_t* scc = calloc(g->v_count, sizeof(size_t));
+    size_t* discovery = calloc(g->v_count, sizeof(size_t));
+    size_t* finish_times = calloc(g->v_count, sizeof(size_t));
+
+    size_t j = 0; size_t count = 1; size_t finish_time = 1;
+    for (size_t i = 0; i < g->v_count; ++i) {
+        finish_map_t current = finish_map[i];
+        if (discovery[current.v_id]) {
+            continue;
+        }
+        count = 1;
+        ++discovery[current.v_id];
+        scc[j++] = dfs(g->vert_arr[current.v_id], discovery, finish_times, &finish_time, &count);
+    }
+
+    destroy_graph(g);
+    free(discovery);
+    free(finish_times);
+    return scc;
 }
 
 size_t* depth_first_search(graph_t* g) {
@@ -140,6 +193,7 @@ void destroy_edge_list(edge_t* e) {
 }
 
 graph_t* read_graph(FILE* f, size_t direction) {
+    fseek(f, 0, SEEK_SET);
     size_t vertice_c = count_vertices(f);
     graph_t* g = create_graph(vertice_c);
 
@@ -202,4 +256,11 @@ void print_finish_times(size_t* dm, size_t len) {
     for (size_t i = 0; i < len; ++i) {
         printf("vertice %zu = %zu\n", i + 1, dm[i]);
     }
+}
+
+int compare_finish_times(const void* a, const void* b) {
+    finish_map_t* aa = (finish_map_t*) a;
+    finish_map_t* bb = (finish_map_t*) b;
+
+    return (aa->finish_time < bb->finish_time);
 }
