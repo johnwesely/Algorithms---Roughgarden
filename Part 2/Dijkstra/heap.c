@@ -1,15 +1,17 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <limits.h>
+#include "heap.h"
 
 #define L 1
 #define R 2
 
-typedef struct __heap {
-    size_t*   arr;
-    size_t   last_index;
-    size_t   size;
-} heap_t;
+
+void heap_bubble_up(heap_t* heap, size_t i);
+void heap_bubble_down(heap_t* heap, size_t i);
+size_t heap_parent_index(size_t i);
+size_t heap_child_index(size_t i, size_t dir);
+size_t heap_depth(size_t i);
 
 
 heap_t* create_heap() {
@@ -17,6 +19,7 @@ heap_t* create_heap() {
     ret->arr = calloc(15, sizeof(size_t));
     ret->last_index = 0;
     ret->size = 15;
+    return ret;
 }
 
 void destroy_heap(heap_t* heap) {
