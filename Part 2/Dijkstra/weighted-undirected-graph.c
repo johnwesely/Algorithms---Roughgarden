@@ -68,7 +68,6 @@ graph_t* read_graph(FILE* f) {
 
     while (getline(&buff, &buff_size, f) != -1) {   
         i = atoi(strtok(buff, " ,\t\r\f\v\n")) - 1;
-        printf("%zu\n", i);
         while ((j_buff = strtok(0, " ,\t\r\f\v\n")) != 0) {  // append all weighted edges with edge i to all j's
             j = atoi(j_buff) - 1;
             w = atoi(strtok(0, " ,\t\r\f\v"));

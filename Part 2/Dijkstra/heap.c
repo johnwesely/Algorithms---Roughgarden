@@ -12,14 +12,16 @@ void heap_bubble_down(heap_t* heap, size_t i);
 size_t heap_parent_index(size_t i);
 size_t heap_child_index(size_t i, size_t dir);
 size_t heap_depth(size_t i);
+void swap_dij_pair(dij_pair_t* a, dij_pair_t* b);
 
 
 heap_t* create_heap() {
     heap_t* ret = malloc(sizeof(heap_t));
-    ret->arr = malloc(15 * sizeof(size_t));
+    ret->arr = malloc(15 * sizeof(dij_pair_t));
 
     for (size_t i = 0; i < 15; ++i) {
-        ret->arr[i] = UINT_MAX;
+        ret->arr[i].id = 0;
+        ret->arr[i].weight = UINT_MAX;
     }
 
     ret->last_index = 0;
@@ -32,27 +34,35 @@ void destroy_heap(heap_t* heap) {
     free(heap);
 }
 
-void push_heap(size_t val, heap_t* heap) {
+void push_heap(dij_pair_t dp, heap_t* heap) {
     if (heap->size <= heap->last_index) {
         size_t old_size = heap->size;
-        heap->arr = realloc(heap->arr, sizeof(size_t) * (heap->size + 10));
+        heap->arr = realloc(heap->arr, sizeof(dij_pair_t) * (heap->size + 10));
         heap->size += 10;
         
         for (size_t i = 0; i < 10; ++i) {
-            heap->arr[old_size + i] = UINT_MAX;
+            heap->arr[old_size + i].id = 0;
+            heap->arr[old_size + i].weight = UINT_MAX;
         }
     }
 
-    heap->arr[heap->last_index] = val;
+    heap->arr[heap->last_index].id = dp.id;
     heap_bubble_up(heap, heap->last_index);
     ++heap->last_index;
 }
 
 size_t pop_heap(heap_t* heap) {
-    size_t ret = heap->arr[0];
+    if (!heap->last_index) {
+        return UINT_MAX;
+    }
+
+    size_t ret = heap->arr[0].id;
     --heap->last_index;
     heap->arr[0] = heap->arr[heap->last_index];
-    heap->arr[heap->last_index] = UINT_MAX;
+
+    heap->arr[heap->last_index].id = 0;
+    heap->arr[heap->last_index].weight = UINT_MAX;
+
     heap_bubble_down(heap, 0);
     return ret;
 }
@@ -61,10 +71,8 @@ void heap_bubble_up(heap_t* heap, size_t i) {
     if (i == 0) return; 
     size_t parent_index = heap_parent_index(i);
 
-    if (heap->arr[parent_index] > heap->arr[i]) {
-        size_t tmp = heap->arr[i];
-        heap->arr[i] = heap->arr[parent_index];
-        heap->arr[parent_index] = tmp;
+    if (heap->arr[parent_index].weight > heap->arr[i].weight) {
+        swap_dij_pair(&heap->arr[i], &heap->arr[parent_index]);
     } else {
         return;
     }
@@ -79,12 +87,10 @@ void heap_bubble_down(heap_t* heap, size_t i) {
 
     size_t ci_r = heap_child_index(i, R);
     size_t ci_l = heap_child_index(i, L);
-    size_t smaller_ci = (heap->arr[ci_r] < heap->arr[ci_l]) ? ci_r : ci_l;
+    size_t smaller_ci = (heap->arr[ci_r].weight < heap->arr[ci_l].weight) ? ci_r : ci_l;
     
-    if (heap->arr[i] > heap->arr[smaller_ci]) {
-        size_t tmp = heap->arr[i];
-        heap->arr[i] = heap->arr[smaller_ci];
-        heap->arr[smaller_ci] = tmp;
+    if (heap->arr[i].weight > heap->arr[smaller_ci].weight) {
+        swap_dij_pair(&heap->arr[i], &heap->arr[smaller_ci]);
     } else {
         return;
     }
@@ -99,7 +105,7 @@ void print_heap(heap_t* heap) {
             printf("\n");
             ++current_depth;
         }
-        printf("%zu == %zu  ", i, heap->arr[i]);
+        printf("%zu == id = %zu, weight = %zu  ", i, heap->arr[i].id, heap->arr[i].weight);
     }
     printf("\n");
 }
@@ -122,4 +128,10 @@ size_t heap_depth(size_t i) {
     }
 
     return depth;
+}
+
+void swap_dij_pair(dij_pair_t* a, dij_pair_t* b) {
+    dij_pair_t tmp = *a;
+    *a = *b;
+    *b = tmp;
 }
