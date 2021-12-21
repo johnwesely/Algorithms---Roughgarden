@@ -16,7 +16,12 @@ size_t heap_depth(size_t i);
 
 heap_t* create_heap() {
     heap_t* ret = malloc(sizeof(heap_t));
-    ret->arr = calloc(15, sizeof(size_t));
+    ret->arr = malloc(15 * sizeof(size_t));
+
+    for (size_t i = 0; i < 15; ++i) {
+        ret->arr[i] = UINT_MAX;
+    }
+
     ret->last_index = 0;
     ret->size = 15;
     return ret;
@@ -29,19 +34,25 @@ void destroy_heap(heap_t* heap) {
 
 void push_heap(size_t val, heap_t* heap) {
     if (heap->size <= heap->last_index) {
+        size_t old_size = heap->size;
         heap->arr = realloc(heap->arr, sizeof(size_t) * (heap->size + 10));
         heap->size += 10;
+        
+        for (size_t i = 0; i < 10; ++i) {
+            heap->arr[old_size + i] = UINT_MAX;
+        }
     }
 
     heap->arr[heap->last_index] = val;
     heap_bubble_up(heap, heap->last_index);
+    ++heap->last_index;
 }
 
 size_t pop_heap(heap_t* heap) {
     size_t ret = heap->arr[0];
-    --heap->size;
-    heap->arr[0] = heap->arr[heap->size];
-    heap->arr[heap->size] = 0;
+    --heap->last_index;
+    heap->arr[0] = heap->arr[heap->last_index];
+    heap->arr[heap->last_index] = UINT_MAX;
     heap_bubble_down(heap, 0);
     return ret;
 }
