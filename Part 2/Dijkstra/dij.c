@@ -4,31 +4,21 @@
 #include <stdlib.h>
 
 int main(int argc, char* argv[]) {
-    heap_t* heap = create_heap();
-
-    for (size_t i = 0; i < 7; ++i) {
-        size_t random = rand() % 100;
-        printf("pushing %zu onto heap\n", random);
-        push_heap(random, heap);
+    if (argc != 2) {
+        printf("include a file dingus\n");
+        return EXIT_FAILURE;
     }
 
-    print_heap(heap);
+    FILE* f = fopen(argv[1], "r");
 
-    for (size_t i = 0; i < 3; ++i) {
-        printf("popping %zu off heap\n", pop_heap(heap));
-        print_heap(heap);
+    if (!f) {
+        perror("failure to load file ");
+        return EXIT_FAILURE;
     }
 
-    for (size_t i = 0; i < 5; ++i) {
-        size_t random = rand() % 100;
-        printf("pushing %zu onto heap\n", random);
-        push_heap(random, heap);
-    }
+    graph_t* g = read_graph(f);
+    print_graph(g);
+    destroy_graph(g);
 
-    for (size_t i = 0; i < 9; ++i) {
-        printf("popping %zu off heap\n", pop_heap(heap));
-    }
-
-    print_heap(heap);
-    destroy_heap(heap);
+    return EXIT_SUCCESS;
 }
