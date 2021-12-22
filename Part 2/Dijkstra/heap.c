@@ -13,13 +13,17 @@ size_t heap_child_index(size_t i, size_t dir);              // returns child ind
 size_t heap_depth(size_t i);                                // returns depth of heap entry at index i
 void swap_dij_pair(dij_pair_t* a, dij_pair_t* b);           // swaps dij_pair in heap
 void swap_heap_map(heap_t* heap, size_t id_i, size_t id_j);  // swaps locations of ids i and j in heap map
+void print_heap_map(heap_t* heap);                            // prints heap_map for debugging
+size_t check_heap_map(heap_t* heap, char* calling_fn);
+
+size_t global = 0;
 
 // allocates heap and returns pointer to heap
 heap_t* create_heap(size_t v_count) {
     heap_t* ret = malloc(sizeof(heap_t));
-    ret->arr = malloc(64 * sizeof(dij_pair_t));
+    ret->arr = malloc(v_count * 2 * sizeof(dij_pair_t));
 
-    for (size_t i = 0; i < 64; ++i) {
+    for (size_t i = 0; i < v_count * 2; ++i) {
         ret->arr[i].id = 0;
         ret->arr[i].weight = UINT_MAX;
     }
@@ -43,16 +47,6 @@ void destroy_heap(heap_t* heap) {
 }
 
 void push_heap(dij_pair_t dp, heap_t* heap) {
-    if (heap->size <= heap->last_index) { // if size of heap exceeds memory allocated, increase size of heap
-        size_t old_size = heap->size;
-        heap->arr = realloc(heap->arr, sizeof(dij_pair_t) * (heap->size + 10));
-        heap->size += 10;
-        
-        for (size_t i = 0; i < 10; ++i) {
-            heap->arr[old_size + i].id = 0;
-            heap->arr[old_size + i].weight = UINT_MAX;
-        }
-    }
 
     heap->arr[heap->last_index].id = dp.id;          // place dp at bottom of heap
     heap->arr[heap->last_index].weight = dp.weight;
@@ -86,11 +80,10 @@ void heap_bubble_up(heap_t* heap, size_t i) {
     if (heap->arr[parent_index].weight > heap->arr[i].weight) {
         swap_dij_pair(&heap->arr[i], &heap->arr[parent_index]);
         swap_heap_map(heap, heap->arr[i].id, heap->arr[parent_index].id);  // maintain heap map
+        check_heap_map(heap, "bu after calling shm");
     } else {
         return;
     }
-
-    heap_bubble_up(heap, parent_index);
 }
 
 void heap_bubble_down(heap_t* heap, size_t i) {
@@ -120,7 +113,7 @@ void print_heap(heap_t* heap) {
             printf("\n");
             ++current_depth;
         }
-        printf("%zu == id = %zu, weight = %zu  ", i, heap->arr[i].id, heap->arr[i].weight);
+        printf("%zu == id = %zu, weight = %zu\n", i, heap->arr[i].id, heap->arr[i].weight);
     }
     printf("\n");
 }
@@ -159,11 +152,34 @@ void swap_heap_map(heap_t* heap, size_t id_i, size_t id_j) {
 
 void decrease_heap_weight(heap_t* heap, size_t id, size_t new_weight) {
     size_t heap_index = heap->heap_map[id];
+    if (heap_index > heap->last_index) {
+    }
 
     if (new_weight < heap->arr[heap_index].weight) {
         heap->arr[heap_index].weight = new_weight;
         heap_bubble_up(heap, heap_index);
     } else {
-        printf("descrease_heap_weight presented with new weight larger than previous weight");
+        printf("descrease_heap_weight presented with new weight larger than previous weight\n");
     }
+}
+
+void print_heap_map(heap_t* heap) {
+    for (size_t i = 0; i < 200; ++i) {
+        printf("id %zu = heap->arr[%zu]\n", i, heap->heap_map[i]);
+    }
+}
+
+size_t check_heap_map(heap_t* heap, char* calling_fn) {
+    for (size_t i = 0; i < 200; ++i) {
+        if (heap->heap_map[i] > heap->last_index + 1 && heap->heap_map[i] != UINT_MAX) {
+            printf("heap map invariant broken by %s\n", calling_fn);
+            if (!global) {
+                print_heap_map(heap);
+                print_heap(heap);
+                ++global;
+            }
+            return i;
+        }
+    }
+    return 0;
 }
