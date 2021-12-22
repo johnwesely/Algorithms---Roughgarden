@@ -30,14 +30,6 @@ int main(int argc, char* argv[]) {
         printf("%zu  %zu\n", i + 1, distances[i]);
     }
 
-    size_t print_arr[] = { 7, 37, 59, 82, 99, 115, 133, 165, 188, 197 };
-
-    printf("chosen vertices are\n");
-    for (size_t i = 0; i < 10; ++i) {
-        printf("%zu,", distances[print_arr[i] - 1]);
-    }
-    printf("\n");
-
     free(distances);
     destroy_graph(g);
     fclose(f);
