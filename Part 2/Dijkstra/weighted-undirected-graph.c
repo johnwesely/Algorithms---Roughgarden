@@ -62,7 +62,7 @@ graph_t* read_graph(FILE* f) {
 
     size_t buff_size = 1024;
     char* buff = calloc(buff_size, 1);
-    char* j_buff = calloc(64, 1);
+    char* j_buff = 0;
 
     size_t i = 0; size_t j = 0; size_t w = 0;
 
@@ -76,12 +76,11 @@ graph_t* read_graph(FILE* f) {
     }
 
     free(buff); 
-    free(j_buff);
 
     return g;
 }
 
-// !!!! count number of vertices in graph represented by file "f"
+// count number of vertices in graph represented by file "f"
 size_t count_vertices(FILE* f) {
     size_t buff_size = 256;
     char* buff = calloc(buff_size, 1);
