@@ -45,6 +45,52 @@ int main(int argc, char* argv[]) {
     return EXIT_SUCCESS;
 }
 
+// O(m log n) implementation of dijkstras using a hash mapped heap
+size_t* dijkstra_shortest_distance(size_t s, graph_t* g) {
+    size_t x_size = 0;                                        // number of vertices in set of visited vertices
+    size_t* distances = malloc(g->v_count * sizeof(size_t));  // distances from vertice s
+    size_t* visited = calloc(g->v_count, sizeof(size_t));
+    heap_t* pq = create_heap(g->v_count);
+
+    for (size_t i = 0; i < g->v_count; ++i) {                 // populate distances with infinity
+        distances[i] = UINT_MAX;
+    }
+
+    distances[s] = 0;                        // set distance of s to zero
+    ++visited[s];                            // add s to set of visted vertices
+    ++x_size;                                // increment size of visted vertices set
+    edge_t* current = g->vert_arr[s].head;   // set s to current vertice
+    size_t dgs = UINT_MAX;                   // Dijkstra's Greedy Criterion
+    size_t current_distance = 0;             // distance of current vertice from s
+    size_t next = 0;                         // unvisted vertice that has the closest calculated distance from s
+
+    while(x_size < g->v_count) {
+        while (current) {
+            dgs = current_distance + current->weight;                                     // calculate dgs for current
+            if (dgs < distances[current->id] && pq->heap_map[current->id] == UINT_MAX) {  // if current is smaller than distances[current] is not in heap  
+                distances[current->id] = dgs;
+                dij_pair_t dp =  { current->id, dgs };
+                push_heap(dp, pq);                                                        // push current to heap
+            } 
+            if (dgs < distances[current->id] && pq->heap_map[current->id] != UINT_MAX) {  // if current is smaller than distances[current] and is in heap
+                distances[current->id] = dgs;
+                decrease_heap_weight(pq, current->id, dgs);                               // decrease weight of current within heap 
+            }
+            current = current->next;
+        }
+
+            next = pop_heap(pq);                    // pop winner of Dijkstra's Greedy Criteria off heap
+            current = g->vert_arr[next].head;       // add winner to list of visted vertexs and continue
+            current_distance = distances[next];
+            ++visited[next];
+            ++x_size;
+    }
+
+        free(visited);
+        destroy_heap(pq);
+        return distances;
+}
+
 // naive implementation of algorithm with running time of O(N squared)
 size_t* dij_naive(size_t s, graph_t* g) {
     size_t x_size = 0;                                        // number of vertices in set of visted vertices
@@ -98,48 +144,3 @@ size_t pick_next(size_t* distances, size_t* visited, size_t v_count) {
     return min_index;
 }
 
-// !!! use heap_pos array to keep track of heap pos????
-size_t* dijkstra_shortest_distance(size_t s, graph_t* g) {
-    size_t x_size = 0;                                        // number of vertices in set of visited vertices
-    size_t* distances = malloc(g->v_count * sizeof(size_t));  // distances from vertice s
-    size_t* visited = calloc(g->v_count, sizeof(size_t));
-    heap_t* pq = create_heap(g->v_count);
-
-    for (size_t i = 0; i < g->v_count; ++i) {                 // populate distances with infinity
-        distances[i] = UINT_MAX;
-    }
-
-    distances[s] = 0;                        // set distance of s to zero
-    ++visited[s];                            // add s to set of visted vertices
-    ++x_size;                                // increment size of visted vertices set
-    edge_t* current = g->vert_arr[s].head;   // set s to current vertice
-    size_t dgs = UINT_MAX;                   // Dijkstra's Greedy Criterion
-    size_t current_distance = 0;             // distance of current vertice from s
-    size_t next = 0;                         // unvisted vertice that has the closest calculated distance from s
-
-    while(x_size < g->v_count) {
-        while (current) {
-            dgs = current_distance + current->weight;                                     // calculate dgs for current
-            if (dgs < distances[current->id] && pq->heap_map[current->id] == UINT_MAX) {  // if current is smaller than distances[current] is not in heap  
-                distances[current->id] = dgs;
-                dij_pair_t dp =  { current->id, dgs };
-                push_heap(dp, pq);                                                        // push current to heap
-            } 
-            if (dgs < distances[current->id] && pq->heap_map[current->id] != UINT_MAX) {  // if current is smaller than distances[current] and is in heap
-                distances[current->id] = dgs;
-                decrease_heap_weight(pq, current->id, dgs);                               // decrease weight of current within heap 
-            }
-            current = current->next;
-        }
-
-            next = pop_heap(pq);                    // pop winner of Dijkstra's Greedy Criteria off heap
-            current = g->vert_arr[next].head;       // add winner to list of visted vertexs and continue
-            current_distance = distances[next];
-            ++visited[next];
-            ++x_size;
-    }
-
-        free(visited);
-        destroy_heap(pq);
-        return distances;
-}
