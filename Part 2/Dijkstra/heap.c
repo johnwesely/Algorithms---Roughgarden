@@ -6,21 +6,19 @@
 #define L 1
 #define R 2
 
+void heap_bubble_up(heap_t* heap, size_t i);          // bubbles dij pair at index i up heap 
+void heap_bubble_down(heap_t* heap, size_t i);        // bubbles dij pair at index i down heap
+size_t heap_parent_index(size_t i);                   // returns parent index of heap index i
+size_t heap_child_index(size_t i, size_t dir);        // returns child index of heap index i, pass L for left child, R for right
+size_t heap_depth(size_t i);                          // returns depth of heap entry at index i
+void swap_dij_pair(dij_pair_t* a, dij_pair_t* b);     // swaps dij_pair in heap
 
-void heap_bubble_up(heap_t* heap, size_t i);
-void heap_bubble_down(heap_t* heap, size_t i);
-size_t heap_parent_index(size_t i);
-size_t heap_child_index(size_t i, size_t dir);
-size_t heap_depth(size_t i);
-void swap_dij_pair(dij_pair_t* a, dij_pair_t* b);
-
-
-/// !!!! what is happening with Realloc???
+// allocates heap and returns pointer to heap
 heap_t* create_heap() {
     heap_t* ret = malloc(sizeof(heap_t));
-    ret->arr = malloc(128 * sizeof(dij_pair_t));
+    ret->arr = malloc(64 * sizeof(dij_pair_t));
 
-    for (size_t i = 0; i < 15; ++i) {
+    for (size_t i = 0; i < 64; ++i) {
         ret->arr[i].id = 0;
         ret->arr[i].weight = UINT_MAX;
     }
@@ -30,13 +28,14 @@ heap_t* create_heap() {
     return ret;
 }
 
+// frees heap
 void destroy_heap(heap_t* heap) {
     free(heap->arr);
     free(heap);
 }
 
 void push_heap(dij_pair_t dp, heap_t* heap) {
-    if (heap->size <= heap->last_index) {
+    if (heap->size <= heap->last_index) { // if size of heap exceeds memory allocated, increase size of heap
         size_t old_size = heap->size;
         heap->arr = realloc(heap->arr, sizeof(dij_pair_t) * (heap->size + 10));
         heap->size += 10;
@@ -47,25 +46,25 @@ void push_heap(dij_pair_t dp, heap_t* heap) {
         }
     }
 
-    heap->arr[heap->last_index].id = dp.id;
+    heap->arr[heap->last_index].id = dp.id;          // place dp at bottom of heap
     heap->arr[heap->last_index].weight = dp.weight;
-    heap_bubble_up(heap, heap->last_index);
+    heap_bubble_up(heap, heap->last_index);          // bubble dp up to appropriate location in heap
     ++heap->last_index;
 }
 
 size_t pop_heap(heap_t* heap) {
-    if (!heap->last_index) {
+    if (!heap->last_index) {  // return infinity if heap is empty
         return UINT_MAX;
     }
 
-    size_t ret = heap->arr[0].id;
+    size_t ret = heap->arr[0].id;   
     --heap->last_index;
-    heap->arr[0] = heap->arr[heap->last_index];
+    heap->arr[0] = heap->arr[heap->last_index];  // place last entry in heap at head
 
     heap->arr[heap->last_index].id = 0;
     heap->arr[heap->last_index].weight = UINT_MAX;
 
-    heap_bubble_down(heap, 0);
+    heap_bubble_down(heap, 0);                   // bubble down to appropriate location
     return ret;
 }
 

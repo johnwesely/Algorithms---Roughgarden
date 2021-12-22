@@ -94,7 +94,7 @@ size_t count_vertices(FILE* f) {
 
     size_t v_count = 0;
 
-    // iterate through all edges, update "v_count" if any node has a higher id than "v_count"
+    // iterate through all edges, update "v_count" if any vertice has a higher id than "v_count"
     while (getline(&buff, &buff_size, f) != -1) {
         vert = strtok(buff, " ");
         if (atoi(vert) > v_count) v_count = atoi(vert);
