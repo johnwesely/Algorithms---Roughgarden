@@ -15,9 +15,10 @@ size_t heap_depth(size_t i);
 void swap_dij_pair(dij_pair_t* a, dij_pair_t* b);
 
 
+/// !!!! what is happening with Realloc???
 heap_t* create_heap() {
     heap_t* ret = malloc(sizeof(heap_t));
-    ret->arr = malloc(15 * sizeof(dij_pair_t));
+    ret->arr = malloc(128 * sizeof(dij_pair_t));
 
     for (size_t i = 0; i < 15; ++i) {
         ret->arr[i].id = 0;
@@ -25,7 +26,7 @@ heap_t* create_heap() {
     }
 
     ret->last_index = 0;
-    ret->size = 15;
+    ret->size = 128;
     return ret;
 }
 
@@ -47,6 +48,7 @@ void push_heap(dij_pair_t dp, heap_t* heap) {
     }
 
     heap->arr[heap->last_index].id = dp.id;
+    heap->arr[heap->last_index].weight = dp.weight;
     heap_bubble_up(heap, heap->last_index);
     ++heap->last_index;
 }
@@ -87,7 +89,8 @@ void heap_bubble_down(heap_t* heap, size_t i) {
 
     size_t ci_r = heap_child_index(i, R);
     size_t ci_l = heap_child_index(i, L);
-    size_t smaller_ci = (heap->arr[ci_r].weight < heap->arr[ci_l].weight) ? ci_r : ci_l;
+    size_t smaller_ci = 0;
+    smaller_ci = (heap->arr[ci_r].weight < heap->arr[ci_l].weight) ? ci_r : ci_l;
     
     if (heap->arr[i].weight > heap->arr[smaller_ci].weight) {
         swap_dij_pair(&heap->arr[i], &heap->arr[smaller_ci]);

@@ -62,7 +62,7 @@ graph_t* read_graph(FILE* f) {
 
     size_t buff_size = 1024;
     char* buff = calloc(buff_size, 1);
-    char* j_buff= calloc(64, 1);
+    char* j_buff = calloc(64, 1);
 
     size_t i = 0; size_t j = 0; size_t w = 0;
 
@@ -75,7 +75,9 @@ graph_t* read_graph(FILE* f) {
         }      
     }
 
-    free(buff);
+    free(buff); 
+    free(j_buff);
+
     return g;
 }
 
