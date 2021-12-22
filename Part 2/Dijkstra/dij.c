@@ -48,6 +48,7 @@ int main(int argc, char* argv[]) {
 size_t* dijkstra_shortest_distance(size_t s, graph_t* g) {
     size_t* distances = malloc(g->v_count * sizeof(size_t));  // distances from vertice s
     size_t* visited = calloc(g->v_count, sizeof(size_t));     // boolean map for whether vertice has been visited by algorithm
+    size_t* heap_pos = calloc(g->v_count, sizeof(size_t));    // pos map for updating values inside heap
 
     for (size_t i = 0; i < g->v_count; ++i) {                 // populate distances with infinity
         distances[i] = UINT_MAX;
@@ -56,7 +57,7 @@ size_t* dijkstra_shortest_distance(size_t s, graph_t* g) {
     distances[s] = 0;
     ++visited[s];
 
-    heap_t* pq = create_heap();                               // priority queue 
+    heap_t* pq = create_heap(g->v_count);                               // priority queue 
 
     edge_t* current = g->vert_arr[s].head;
 
@@ -82,7 +83,7 @@ size_t* dijkstra_shortest_distance(size_t s, graph_t* g) {
 // recursive call will be removed as causes incorrect shortest paths on some graphs
 void dij(size_t v, graph_t* g, size_t* distances, size_t* visited) {
     edge_t* current = g->vert_arr[v].head;
-    heap_t* pq = create_heap();
+    heap_t* pq = create_heap(g->v_count);
 
     while (current) {
         if (distances[v] + current->weight < distances[current->id]) {
@@ -155,4 +156,20 @@ size_t pick_next(size_t* distances, size_t* visited, size_t v_count) {
     }
 
     return min_index;
+}
+
+// !!! use heap_pos array to keep track of heap pos????
+size_t* dijkstra_shortest_distance(size_t s, graph_t* g) {
+    size_t x_size = 0;                                        // number of vertices in set of visited vertices
+    size_t* distances = malloc(g->v_count * sizeof(size_t));  // distances from vertice s
+    size_t* visited = calloc(g->v_count, sizeof(size_t));     // boolean map for whether vertice has been visited by algorithm
+
+    for (size_t i = 0; i < g->v_count; ++i) {                 // populate distances with infinity
+        distances[i] = UINT_MAX;
+    }
+
+    distances[s] = 0;
+    ++visited[s];
+
+    
 }

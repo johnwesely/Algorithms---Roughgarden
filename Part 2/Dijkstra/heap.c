@@ -6,21 +6,28 @@
 #define L 1
 #define R 2
 
-void heap_bubble_up(heap_t* heap, size_t i);          // bubbles dij pair at index i up heap 
-void heap_bubble_down(heap_t* heap, size_t i);        // bubbles dij pair at index i down heap
-size_t heap_parent_index(size_t i);                   // returns parent index of heap index i
-size_t heap_child_index(size_t i, size_t dir);        // returns child index of heap index i, pass L for left child, R for right
-size_t heap_depth(size_t i);                          // returns depth of heap entry at index i
-void swap_dij_pair(dij_pair_t* a, dij_pair_t* b);     // swaps dij_pair in heap
+void heap_bubble_up(heap_t* heap, size_t i);                // bubbles dij pair at index i up heap 
+void heap_bubble_down(heap_t* heap, size_t i);              // bubbles dij pair at index i down heap
+size_t heap_parent_index(size_t i);                         // returns parent index of heap index i
+size_t heap_child_index(size_t i, size_t dir);              // returns child index of heap index i, pass L for left child, R for right
+size_t heap_depth(size_t i);                                // returns depth of heap entry at index i
+void swap_dij_pair(dij_pair_t* a, dij_pair_t* b);           // swaps dij_pair in heap
+void swap_heap_map(heap_t* heap, size_t id_i, size_t id_j)  // swaps locations of ids i and j in heap map
 
 // allocates heap and returns pointer to heap
-heap_t* create_heap() {
+heap_t* create_heap(size_t v_count) {
     heap_t* ret = malloc(sizeof(heap_t));
     ret->arr = malloc(64 * sizeof(dij_pair_t));
 
     for (size_t i = 0; i < 64; ++i) {
         ret->arr[i].id = 0;
         ret->arr[i].weight = UINT_MAX;
+    }
+
+    ret->heap_map = malloc(v_count * sizeof(size_t));
+
+    for (size_t i = 0; i < v_count; ++i) {
+        ret->heap_map[i] = UINT_MAX;
     }
 
     ret->last_index = 0;
@@ -31,6 +38,7 @@ heap_t* create_heap() {
 // frees heap
 void destroy_heap(heap_t* heap) {
     free(heap->arr);
+    free(heap->heap_map);
     free(heap);
 }
 
@@ -48,6 +56,7 @@ void push_heap(dij_pair_t dp, heap_t* heap) {
 
     heap->arr[heap->last_index].id = dp.id;          // place dp at bottom of heap
     heap->arr[heap->last_index].weight = dp.weight;
+    heap->heap_map[dp.id] = heap->last_index;        // update dp.id in hash map
     heap_bubble_up(heap, heap->last_index);          // bubble dp up to appropriate location in heap
     ++heap->last_index;
 }
@@ -58,8 +67,10 @@ size_t pop_heap(heap_t* heap) {
     }
 
     size_t ret = heap->arr[0].id;   
+    heap->heap_map[heap->arr[0].id] = UINT_MAX;  // set heap map of id being popped to infinity
     --heap->last_index;
     heap->arr[0] = heap->arr[heap->last_index];  // place last entry in heap at head
+    heap->heap_map[heap->arr[0].id] = 0;         // update heap->arr[0].id in heap map
 
     heap->arr[heap->last_index].id = 0;
     heap->arr[heap->last_index].weight = UINT_MAX;
@@ -74,6 +85,7 @@ void heap_bubble_up(heap_t* heap, size_t i) {
 
     if (heap->arr[parent_index].weight > heap->arr[i].weight) {
         swap_dij_pair(&heap->arr[i], &heap->arr[parent_index]);
+        swap_heap_map(heap, heap->arr[i].id, heap->arr[parent_index].id);  // maintain heap map
     } else {
         return;
     }
@@ -93,6 +105,7 @@ void heap_bubble_down(heap_t* heap, size_t i) {
     
     if (heap->arr[i].weight > heap->arr[smaller_ci].weight) {
         swap_dij_pair(&heap->arr[i], &heap->arr[smaller_ci]);
+        swap_heap_map(heap, heap->arr[i].id, heap->arr[smaller_ci].id);   // maintain heap map
     } else {
         return;
     }
@@ -136,4 +149,21 @@ void swap_dij_pair(dij_pair_t* a, dij_pair_t* b) {
     dij_pair_t tmp = *a;
     *a = *b;
     *b = tmp;
+}
+
+void swap_heap_map(heap_t* heap, size_t id_i, size_t id_j) {
+    size_t tmp = heap->heap_map[id_i];
+    heap->heap_map[id_i] = heap->heap_map[id_j];
+    heap->heap_map[id_j] = tmp;
+}
+
+void decrease_heap_weight(heap_t* heap, size_t id, size_t new_weight) {
+    size_t heap_index = heap->heap_map[id];
+
+    if (new_weight < heap->arr[heap_index].weight) {
+        heap->arr[heap_index].weight = new_weight;
+        heap_bubble_up(heap, heap_index);
+    } else {
+        printf("descrease_heap_weight presented with new weight larger than previous weight");
+    }
 }
