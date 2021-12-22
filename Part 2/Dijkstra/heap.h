@@ -24,6 +24,6 @@ heap_t* create_heap(size_t v_count);
 void destroy_heap(heap_t* heap);
 void push_heap(dij_pair_t dp, heap_t* heap);
 size_t pop_heap(heap_t* heap);
-void   edit_heap_value(size_t key, size_t new_weight);
+void   decrease_heap_weight(heap_t* heap, size_t id, size_t new_weight);
 
 #endif

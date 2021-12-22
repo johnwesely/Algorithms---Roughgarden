@@ -43,7 +43,7 @@ int main(int argc, char* argv[]) {
 
     return EXIT_SUCCESS;
 }
-
+/*
 // Dijkstra's Shortest Path using a heap for O(M log N) run time
 size_t* dijkstra_shortest_distance(size_t s, graph_t* g) {
     size_t* distances = malloc(g->v_count * sizeof(size_t));  // distances from vertice s
@@ -104,6 +104,7 @@ void dij(size_t v, graph_t* g, size_t* distances, size_t* visited) {
 
     destroy_heap(pq);
 }
+*/
 
 // naive implementation of algorithm with running time of O(N squared)
 size_t* dij_naive(size_t s, graph_t* g) {
@@ -162,14 +163,44 @@ size_t pick_next(size_t* distances, size_t* visited, size_t v_count) {
 size_t* dijkstra_shortest_distance(size_t s, graph_t* g) {
     size_t x_size = 0;                                        // number of vertices in set of visited vertices
     size_t* distances = malloc(g->v_count * sizeof(size_t));  // distances from vertice s
-    size_t* visited = calloc(g->v_count, sizeof(size_t));     // boolean map for whether vertice has been visited by algorithm
+    size_t* visited = calloc(g->v_count, sizeof(size_t));
+    heap_t* pq = create_heap(g->v_count);
 
     for (size_t i = 0; i < g->v_count; ++i) {                 // populate distances with infinity
         distances[i] = UINT_MAX;
     }
 
-    distances[s] = 0;
-    ++visited[s];
+    distances[s] = 0;                        // set distance of s to zero
+    ++visited[s];                            // add s to set of visted vertices
+    ++x_size;                                // increment size of visted vertices set
+    edge_t* current = g->vert_arr[s].head;   // set s to current vertice
+    size_t dgs = UINT_MAX;                   // Dijkstra's Greedy Criterion
+    size_t current_distance = 0;             // distance of current vertice from s
+    size_t next = 0;                         // unvisted vertice that has the closest calculated distance from s
 
-    
+    while(x_size < g->v_count) {
+        while (current) {
+            dgs = current_distance + current->weight;
+            if (dgs < distances[current->id] && pq->heap_map[current->id] == UINT_MAX) {
+                distances[current->id] = dgs;
+                dij_pair_t dp =  { current->id, dgs };
+                push_heap(dp, pq);
+            } 
+            if (dgs < distances[current->id] && pq->heap_map[current->id] != UINT_MAX) {
+                distances[current->id] = dgs;
+                decrease_heap_weight(pq, current->id, dgs);
+            }
+            current = current->next;
+        }
+
+            next = pop_heap(pq);
+            current = g->vert_arr[next].head;
+            current_distance = distances[next];
+            ++visited[next];
+            ++x_size;
+    }
+
+        free(visited);
+        destroy_heap(pq);
+        return distances;
 }

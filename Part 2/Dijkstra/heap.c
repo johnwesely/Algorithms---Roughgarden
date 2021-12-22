@@ -12,7 +12,7 @@ size_t heap_parent_index(size_t i);                         // returns parent in
 size_t heap_child_index(size_t i, size_t dir);              // returns child index of heap index i, pass L for left child, R for right
 size_t heap_depth(size_t i);                                // returns depth of heap entry at index i
 void swap_dij_pair(dij_pair_t* a, dij_pair_t* b);           // swaps dij_pair in heap
-void swap_heap_map(heap_t* heap, size_t id_i, size_t id_j)  // swaps locations of ids i and j in heap map
+void swap_heap_map(heap_t* heap, size_t id_i, size_t id_j);  // swaps locations of ids i and j in heap map
 
 // allocates heap and returns pointer to heap
 heap_t* create_heap(size_t v_count) {
