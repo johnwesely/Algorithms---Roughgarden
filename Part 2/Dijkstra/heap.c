@@ -84,6 +84,7 @@ void heap_bubble_up(heap_t* heap, size_t i) {
     } else {
         return;
     }
+    heap_bubble_up(heap, parent_index);
 }
 
 void heap_bubble_down(heap_t* heap, size_t i) {
