@@ -107,6 +107,7 @@ void destroy_heap(heap_t* heap) {
 void push_heap(size_t n, heap_t* heap) {
     heap->arr[heap->last_index] = n;
     heap_bubble_up(heap, heap->last_index);
+    ++heap->last_index;
 }
 
 size_t pop_heap(heap_t* heap) {
