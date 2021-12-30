@@ -26,7 +26,7 @@ void destroy_edge_list(edge_list_t* el) {
     if (!el) return;
 
     edge_list_t* current = el;
-    while (current->next) {
+    if (current->next) {
         destroy_edge_list(current->next);
     }
     free(current);
@@ -35,7 +35,9 @@ void destroy_edge_list(edge_list_t* el) {
 // destroys graph
 void destroy_graph(graph_t* g) {
     for (size_t i = 0; i < g->v_count; ++i) {
-        destroy_edge_list(g->v_arr[i].head);
+        if (g->v_arr[i].head) {
+            destroy_edge_list(g->v_arr[i].head);
+        }
     }
 
     for (size_t i = 0; i < g->e_count; ++i) {
