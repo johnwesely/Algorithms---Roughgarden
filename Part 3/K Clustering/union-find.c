@@ -70,15 +70,28 @@ void set_children(size_t new_parent, child_list_t* cl, union_find_t* uf) {
 }
 
 void make_union(size_t set_a, size_t set_b, union_find_t* uf) {
+    set_a = find(set_a, uf);      // find parents of set_a and set_b
+    set_b = find(set_b, uf);
+    if (set_a == set_b) return;   // do nothing if they are the same set
+
     if (uf->sets[set_a].size > uf->sets[set_b].size) {
         set_children(uf->sets[set_a].id, uf->sets[set_b].children, uf);    // set children of set b to new parent a
         append_child(uf->sets[set_b].children, uf->sets[set_a].children);  // append child list of b to a
         uf->sets[set_a].size += uf->sets[set_b].size;                      // add size of b to a
         uf->sets[set_b].size = 0;                                          // set size of b to 0
+        uf->sets[set_b].children = 0;
     } else {
         set_children(uf->sets[set_b].id, uf->sets[set_a].children, uf);    // same but revers
-        append_child(uf->sets[set_b].children, uf->sets[set_b].children);
+        append_child(uf->sets[set_a].children, uf->sets[set_b].children);
         uf->sets[set_b].size += uf->sets[set_a].size;
         uf->sets[set_a].size = 0;
+        uf->sets[set_a].children = 0;
+    }
+}
+
+void print_union_find(union_find_t* uf) {
+    printf("printing union find\n");
+    for (size_t i = 0; i < uf->size; ++i) {
+        printf("child %zu = parent %zu\n", i, find(i, uf));
     }
 }
