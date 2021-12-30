@@ -9,7 +9,12 @@ graph_t* create_graph(size_t v_count, size_t e_count) {
     graph_t* ret = malloc(sizeof(graph_t));
     ret->v_count = v_count;
     ret->e_count = e_count;
-    ret->v_arr = malloc(sizeof(node_t) * v_count);
+    ret->v_arr = calloc(v_count, sizeof(node_t));
+
+    for (size_t i = 0; i < v_count; ++i) {
+        ret->v_arr[i].id = i;
+    }
+
     ret->e_arr = malloc(sizeof(edge_t*) * e_count);
     ret->uf = create_union_find(v_count);
 
@@ -61,7 +66,7 @@ void append_edge(graph_t* g, size_t i, size_t j, size_t w, size_t index) {
     edge->weight = w;
     edge->i = &g->v_arr[i];
     edge->j = &g->v_arr[j];
-    append_edge_list(edge, j, &g->v_arr[i);
+    append_edge_list(edge, j, &g->v_arr[i]);
     append_edge_list(edge, i, &g->v_arr[j]);
 }
 
