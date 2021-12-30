@@ -1,10 +1,10 @@
 #include "kruskal.h"
 
 int compare_edges(const void* a, const void* b) {
-    edge_t* aa = (edge_t*)a;
-    edge_t* bb = (edge_t*)b;
+    edge_t* edge_a = *(edge_t**)a;
+    edge_t* edge_b = *(edge_t**)b;
 
-    if (aa->weight > bb->weight) {
+    if (edge_a->weight > edge_b->weight) {
         return 1;
     } else {
         return -1;
