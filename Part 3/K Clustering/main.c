@@ -3,6 +3,7 @@
 #include <string.h>
 #include "union-find.h"
 #include "weighted-undirected-graph.h"
+#include "kruskal.h"
 
 graph_t* read_graph(FILE* f);
 
@@ -20,12 +21,15 @@ int main(int argc, char* argv[]) {
 
     graph_t* g = read_graph(f);
     print_graph(g);
+    print_edges(g);
 
+    printf("max cluster distance of g with 4 clusters is %zu\n", k_clustering(g, 4));
     fclose(f);
     destroy_graph(g);
 
     return EXIT_SUCCESS;
 }
+
 
 size_t getline(char **restrict lineptr, size_t *restrict n, FILE *restrict stream);
 

@@ -45,6 +45,7 @@ struct __graph {
 graph_t* read_graph(FILE* f);                                             // read graph from file
 graph_t* create_graph(size_t v_count, size_t e_count);                    // create graph
 void print_graph(graph_t* g);                                             // print graph to terminal
+void print_edges(graph_t* g);                                             // prints edges of graph
 void destroy_graph(graph_t* g);                                           // free graph
 void append_edge(graph_t* g, size_t i, size_t j, size_t w, size_t index); // creates and appends edge to graph
 

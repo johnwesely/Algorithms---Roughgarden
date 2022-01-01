@@ -7,5 +7,7 @@
 #define K_H
 
 void sort_edges(graph_t* g);
+size_t kruskal_mst(graph_t* g);
+size_t k_clustering(graph_t* g, size_t k);
 
 #endif

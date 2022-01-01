@@ -86,3 +86,9 @@ void print_graph(graph_t* g) {
         printf("NULL\n");
     }
 }
+
+void print_edges(graph_t* g) {
+    for (size_t i = 0; i < g->e_count; ++i) {
+        printf("i = %zu, j = %zu, w = %zu\n", g->e_arr[i]->id_i + 1, g->e_arr[i]->id_j + 1, g->e_arr[i]->weight);
+    }
+}
