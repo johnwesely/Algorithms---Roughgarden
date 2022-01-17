@@ -5,6 +5,9 @@
 #include "wdg.h"
 #include "floyd-warshall.h"
 
+int shortest_shortest_path(int** distances, graph_t* g); 
+graph_t* read_graph(FILE* f);
+    
 int main(int argc, char* argv[]) {
     if (argc != 2) {
         printf("Huffman takes one command line arugments");
@@ -32,7 +35,13 @@ int main(int argc, char* argv[]) {
     }
 
     graph_t* g = read_graph(f);
-    print_graph(g);
+    int** distances = floyd_warshall(g);
+
+    if (distances) {
+        printf("shortest shortest path path is length %d\n", shortest_shortest_path(distances, g));
+        destroy_distances(distances, g);
+    }
+
     destroy_graph(g);
     fclose(f);
 
@@ -67,4 +76,14 @@ graph_t* read_graph(FILE* f) {
 
     free(buff);
     return g;
+}
+
+int shortest_shortest_path(int** distances, graph_t* g) {
+    int ssp = 0; 
+    for (size_t i = 0; i < g->v_count; ++i) {
+        for (size_t j = 0; j < g->v_count; ++j) {
+            if (distances[i][j] < ssp) ssp = distances[i][j];
+        }
+    }
+    return ssp;
 }
