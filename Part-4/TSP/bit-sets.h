@@ -11,10 +11,11 @@ typedef struct __bit_set_member {
     size_t last_j;    // id of last visted vertex 
 } bsm_t;
 
-typedef struct __linked_list_node {
+typedef struct __linked_list_node node_t;
+struct __linked_list_node {
     size_t  index;      // index of bit set member
     node_t* next;       // pointer to next member in list
-} node_t;
+};
 
 typedef struct __linked_list_head {
     node_t* head;
@@ -28,7 +29,8 @@ typedef struct __bit_set {
 
 size_t set_bit_index(size_t n);  // returns index of first set bit
 size_t count_bits(size_t n);     // returns number of set bits
-size_t create_bit_set(size_t n); // create bit sets for all permutations of 25 bits
+bit_set_t* create_bit_set(size_t n); // create bit sets for all permutations of 25 bits
 void destroy_bit_set(bit_set_t* bit_set); // free bit set
+void print_bit_set_groups(bit_set_t* bit_set); // prints bits set groups
 
 #endif
