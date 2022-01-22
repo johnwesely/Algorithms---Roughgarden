@@ -1,91 +1,153 @@
 #include "tsp.h"
-#include <limits.h>
 
-size_t is_even(size_t n) {
-    if ((n ^ 1) == (n + 1)) {
-        return 1;
-    } else {
-        return 0; 
+void setup(graph_t g, double** memo, size_t n);
+void solve(graph_t g, double** memo, size_t n); 
+double min_cost(graph_t g, double** memo, size_t n);
+size_t not_in_subset(size_t v, size_t sub_set); 
+subset_list_t* generate_combinations(size_t gen_n, size_t n);
+void gc(size_t subset, size_t at, size_t gen_n, size_t n, subset_list_t* subsets);
+void append_subset_list(subset_list_t* subsets, size_t subset);
+void destroy_subset_list(subset_list_t* subsets);
+void destroy_subset_nodes(subset_node_t* subsets);
+void print_memo_table(double** memo, size_t n);
+void print_graph(graph_t g, size_t n);
+
+
+double find_shortest_tour(graph_t g, size_t n) {
+    double** memo = malloc(sizeof(double*) * n);       // create n by 2^n memo table
+    size_t mt_depth = pow(2, n);
+    for (size_t i = 0; i < n; ++i) {
+        memo[i] = calloc(mt_depth, sizeof(double));
+    }
+
+    setup(g, memo, n);                               // initialize memo table
+    solve(g, memo, n);                               // populate memo table
+
+    double ret = min_cost(g, memo, n);
+
+    
+    for (size_t i = 0; i < n; ++i) {
+        free(memo[i]);
+    }
+    free(memo);
+
+    return ret;
+}
+
+void setup(graph_t g, double** memo, size_t n) {
+    for (size_t i = 1; i < n; ++i) {
+        memo[i][1 | 1 << i] = g[0][i];     // set bit mask representing each intial hope to distance from zero to i
     }
 }
 
-double find_shortest_path(double** g, bit_set_t* bit_set) {
-    bit_set->bsm_arr[1].value = 0;
-    bit_set->bsm_arr[1].last_j = 0;
+void solve(graph_t g, double** memo, size_t n) {
+    for (size_t gen = 3; gen < n + 1; ++ gen) {                        // for generations 3 through n-1
+        subset_list_t* subset_list = generate_combinations(gen, n);
+        subset_node_t* subset = subset_list->head;
 
-    // determine the shortest path visiting each vertex once for each possible set up to n-1 vertices
-    for (size_t i = 2; i < bit_set->size; ++i) {
-        printf("outer loop %zu\n", i);
-        node_t* current_gen = bit_set->bit_group_arr[i].head;  // list of sets with current generations number of members
-
-        while (current_gen) {
-            // if current_gen set has even numerical representation, set doesn't contain first stop, skip to next set
-            /*
-            if (is_even(current_gen->index)) {  
-                current_gen = current_gen->next;
+        while (subset) {                                           // for each possible subset of generation members
+            if (not_in_subset(0, subset->set)) {                   // if 0th bit is not set, move to next subset
+                subset = subset->next;
                 continue;
             }
-            */
 
-            bsm_t* current_member = &bit_set->bsm_arr[current_gen->index];  // current set
-            node_t* previous_gen = bit_set->bit_group_arr[i-1].head;       // previous generation of sets
-            /* 
-            while (previous_gen) {
-                printf("shortest path for set %zu ending at vertice %zu: %lf\n", previous_gen->index, bit_set->bsm_arr[previous_gen->index].last_j, bit_set->bsm_arr[previous_gen->index].value);
-                previous_gen = previous_gen->next;
+            for (size_t next = 1; next < n; ++next) {              // for each possible next vertice
+                if (not_in_subset(next, subset->set)) continue;
+                size_t state = subset->set ^ (1 << next);          // subset without next hop
+                double minimum_distance = 9000000;
+
+                for (size_t last_j = 1; last_j < n; ++last_j) {                               // for each possible last hop
+                    if (last_j == next || not_in_subset(last_j, subset->set)) continue;       // if possible last hop is not in subset, skip
+                    float candidate_distance = memo[last_j][state] + g[last_j][next];         // calculate distance of mimumum length of path ending with last hop
+                    if (candidate_distance < minimum_distance) {                              // if that distance is smaller the current minumum, set current minimum 
+                        minimum_distance = candidate_distance;
+                    }
+                }
+                memo[next][subset->set] = minimum_distance;   // add this iterations minimum to appropriate location in memo table
             }
-            
-            previous_gen = bit_set->bit_group_arr[i-1].head;
-*/
-            while (previous_gen) {
-                //printf("previous gen index is %zu\n", previous_gen->index);
-                bsm_t* previous_member = &bit_set->bsm_arr[previous_gen->index];
+            subset = subset->next;
+        }
+        destroy_subset_list(subset_list);
+    }
+}
 
-                // if previous gen is even, set doesn't contain first stop, or previous set being checked has more than one different bit than current set
-                if (/*is_even(previous_member->key) || */count_bits(current_member->key ^ previous_member->key) > 1) {
-                    previous_gen = previous_gen->next;  // skip to next set in set of previous sets
-                    continue;
-                }
+double min_cost(graph_t g, double** memo, size_t n) {
+    size_t end_state = (1 << n) - 1;
 
-                size_t next_stop_index = set_bit_index(current_member->key ^ previous_member->key);
-                //printf("previous member is %zu, previous member.last_j is %zu, next stop index is %zu\n", previous_member->key, previous_member->last_j, next_stop_index);
-                if (previous_member->value + g[previous_member->last_j][next_stop_index] == current_member->value) {
-                    printf("two paths with same value for set\n");
-                }
-                if (previous_member->value + g[previous_member->last_j][next_stop_index] < current_member->value) {
-                    //printf("updating set %zu with value %zu and last_j %zu\n", current_member->key, previous_member->value + g[previous_member->last_j][next_stop_index], next_stop_index);
-                    current_member->value = previous_member->value + g[previous_member->last_j][next_stop_index];
-                    current_member->last_j = next_stop_index;
-                }
+    double min_tour_cost = 9000000;
 
-                previous_gen = previous_gen->next;
-            }
-
-            current_gen = current_gen->next;
+    for (size_t i = 1; i < n; ++i) {
+        double candidate_cost = memo[i][end_state] + g[i][0];  // cost of shortest path containing all nodes to i with final hop back to 0
+        if (candidate_cost < min_tour_cost) {
+            min_tour_cost = candidate_cost;
         }
     }
 
-    // pick minimum of all set n-1s + distance to final vertix + distance to first vertex
-    double ret = 9000000;
-    size_t final_gen = bit_set->bit_group_arr[bit_set->size].head->index;
-    node_t* previous_gen = bit_set->bit_group_arr[bit_set->size-1].head;
+    return min_tour_cost;
+}
 
-    while (previous_gen) {
-        if (is_even(previous_gen->index)) {
-            previous_gen = previous_gen->next;
-            continue;
-        }
+// recursively generate all combinations with gen_n flipped bits out of n total bits
+subset_list_t* generate_combinations(size_t gen_n, size_t n) {
+    subset_list_t* subsets = malloc(sizeof(subset_list_t)); 
+    subsets->head = 0;
+    gc(0, 0, gen_n, n, subsets);
+    return subsets;
+}
 
-        bsm_t* current_member = &bit_set->bsm_arr[previous_gen->index];
-        size_t next_stop_index = set_bit_index(current_member->key ^ final_gen);
-        double candidate = current_member->value + g[current_member->last_j][next_stop_index] + g[next_stop_index][0];
-        printf("potential candidate %lf\n", candidate);
-        if (ret > candidate) {
-            ret = candidate;
-        }
-        
-        previous_gen = previous_gen->next;
+// recursive helper function for generate combinations 
+void gc(size_t subset, size_t at, size_t gen_n, size_t n, subset_list_t* subsets) {
+    if (gen_n == 0) append_subset_list(subsets, subset);
+
+    for (size_t i = at; i < n; ++i) {
+        subset = subset | (1 << i);
+        gc(subset, i + 1, gen_n - 1, n, subsets);
+        subset = subset & ~(1 << i);
+    }
+}
+
+// functions for managing subset lists
+void append_subset_list(subset_list_t* subsets, size_t subset) {
+    subset_node_t* subset_node = malloc(sizeof(subset_node_t));
+    subset_node->set = subset;
+    subset_node->next = subsets->head;
+    subsets->head = subset_node;
+}
+
+void destroy_subset_list(subset_list_t* subsets) {
+    destroy_subset_nodes(subsets->head);
+    free(subsets);
+}
+
+void destroy_subset_nodes(subset_node_t* subsets) {
+    if (!subsets) {
+        return;
     }
 
-    return ret;
+    destroy_subset_nodes(subsets->next);
+
+    free(subsets);
+}
+
+size_t not_in_subset(size_t v, size_t sub_set) {  // returns true is vertex v is not in sub_set
+    return (((1 << v) & sub_set) == 0);
+}
+
+// printing functions for debuggging
+void print_memo_table(double** memo, size_t n) {
+    size_t mt_depth = pow(2, n);
+
+    for (size_t i = 0; i < mt_depth; ++i) {
+        for (size_t j = 0; j < n; ++j) {
+            printf("%lf ", memo[j][i]);
+        }
+        printf("\n");
+    }
+}
+
+void print_graph(graph_t g, size_t size) {
+    for (size_t i = 0; i < size; ++i) {
+        for (size_t j = 0; j < size; ++j) {
+            printf("distance from %zu to %zu is %lf\n", i, j, g[i][j]);
+        }
+    }
 }
